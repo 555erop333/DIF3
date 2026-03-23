@@ -61,7 +61,8 @@ server/
   contractHistory.js  — история договоров
   mailSystem.js       — внутриигровая почта
   accountSystem.js    — финансы и сче<img width="2560" height="1392" alt="vivaldi_Q4QW0JWLj5" src="https://github.com/user-attachments/assets/9c4d69a9-341e-41ac-b62e-d0577fcb2bf3" />
-та
+та<img width="2560" height="1392" alt="vivaldi_g87gqHYtB3" src="https://github.com/user-attachments/assets/a772d48b-f17e-4da0-9d96-e5eb5d46420b" />
+
   newsSystem.js       — новостная лента
   lobby.js            — лобби и подключение
   actionLog.js        — лог действий
@@ -81,9 +82,8 @@ shared/
 ISC
 
 
-<img width="2560" height="1392" alt="vivaldi_g87gqHYtB3" src="https://github.com/user-attachments/assets/36d957be-5173-4046-869b-3775f2085a0d" />
-<img width="2560" height="1392" alt="vivaldi_Q4QW0JWLj5" src="https://github.com/user-attachments/assets/311d49bd-85aa-444b-8273-ef3831bafa64" />
-![vivaldi_a1JhMbXm0a](https://github.com/user-attachments/assets/403a9a90-d497-45ca-a050-b5f0aa6377e0)
-![vivaldi_LrDDC3sm7P](https://github.com/user-attachments/assets/c3776926-f5ae-4e2b-8bf4-1a58619f98ca)
-<img width="2560" height="1392" alt="vivaldi_nOtQvTX4qZ" src="https://github.com/user-attachments/assets/6db70310-8909-4a1e-8fd0-17bf9451bbe0" />
-<img width="1353" height="716" alt="WindowsTerminal_ZlJGRB66LE" src="https://github.com/user-attachments/assets/9414810c-f903-47c0-a867-9ecc11fc9c7f" />
+
+<img width="2560" height="1392" alt="vivaldi_g87gqHYtB3" src="https://github.com/user-attachments/assets/beefe9f3-ccfb-447e-bfbb-168a48409885" />
+<img width="2560" height="1392" alt="vivaldi_Q4QW0JWLj5" src="https://github.com/user-attachments/assets/666e5aa4-77de-4d89-b6a5-477969f6ee72" />
+<img width="2560" height="1392" alt="vivaldi_nOtQvTX4qZ" src="https://github.com/user-attachments/assets/2c626c5c-ed9e-4e2e-9977-2cbf8d01d257" />
+<img width="1353" height="716" alt="WindowsTerminal_ZlJGRB66LE" src="https://github.com/user-attachments/assets/09840e94-8fa4-4fce-8ce8-082816e82cf0" />
