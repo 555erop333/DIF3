@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DIF3 — Морская торговая симуляция</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/map.css">
+  <link rel="stylesheet" href="/css/panels.css">
+</head>
+<body>
+  <!-- Top bar -->
+  <div id="top-bar">
+    <div id="company-info">
+      <span id="company-name">—</span>
+      <span id="company-role" class="role-badge">—</span>
+    </div>
+    <div id="balance-display">
+      Баланс: <span id="balance-value">0</span> $
+    </div>
+    <div id="game-time">
+      <span id="game-date">01.01.2024</span>,
+      <span id="game-clock">0:00:00</span>
+    </div>
+    <div id="host-controls" class="hidden">
+      <button id="btn-pause" class="btn-sm" title="Пауза">&#10074;&#10074;</button>
+      <button id="btn-play" class="btn-sm hidden" title="Продолжить">&#9654;</button>
+      <label title="Игровых минут в секунду">
+        <input type="number" id="speed-input" value="30" min="1" max="600" step="1" style="width:50px"> мин/с
+      </label>
+    </div>
+  </div>
+
+  <!-- Main content -->
+  <div id="main-content">
+    <!-- Map -->
+    <div id="map-container">
+      <canvas id="game-map"></canvas>
+    </div>
+
+    <!-- Panel area (split into 2 slots) -->
+    <div id="panel-area-divider" class="hidden"></div>
+    <div id="panel-area" class="hidden">
+      <div class="panel-slot" id="slot-0" data-slot="0">
+        <div class="slot-header">
+          <span class="slot-title"></span>
+          <div class="slot-btns">
+            <button class="btn-sm slot-popout" title="Открыть в новом окне">&#8599;</button>
+            <button class="btn-sm slot-close" title="Закрыть">&times;</button>
+          </div>
+        </div>
+        <div class="slot-content"></div>
+        <div class="slot-empty">Перетащите панель сюда<br>или нажмите кнопку в меню</div>
+      </div>
+      <div class="panel-slot-divider" id="slot-divider"></div>
+      <div class="panel-slot" id="slot-1" data-slot="1">
+        <div class="slot-header">
+          <span class="slot-title"></span>
+          <div class="slot-btns">
+            <button class="btn-sm slot-popout" title="Открыть в новом окне">&#8599;</button>
+            <button class="btn-sm slot-close" title="Закрыть">&times;</button>
+          </div>
+        </div>
+        <div class="slot-content"></div>
+        <div class="slot-empty">Перетащите панель сюда<br>или нажмите кнопку в меню</div>
+      </div>
+    </div>
+
+    <!-- Right sidebar -->
+    <div id="sidebar">
+      <button class="sidebar-btn" data-panel="reports">Отчёты/НСИ</button>
+      <button class="sidebar-btn" data-panel="account">Счёт</button>
+      <button class="sidebar-btn" data-panel="mail">Почта <span id="mail-badge" class="badge hidden">0</span></button>
+      <button class="sidebar-btn" data-panel="port">Порт</button>
+      <button class="sidebar-btn" data-panel="offer">Оферта</button>
+      <button class="sidebar-btn" data-panel="contracts">Договоры</button>
+      <button class="sidebar-btn" data-panel="fleet">Суда</button>
+      <button class="sidebar-btn" data-panel="exchange">Биржа</button>
+      <button class="sidebar-btn" data-panel="log">Журнал</button>
+      <button class="sidebar-btn btn-info" id="btn-info-sidebar">Информация</button>
+      <button class="sidebar-btn btn-exit" id="btn-exit">ВЫХОД</button>
+    </div>
+  </div>
+
+  <!-- News ticker -->
+  <div id="news-ticker">
+    <div id="news-ticker-label">НОВОСТИ</div>
+    <div id="news-ticker-track">
+      <span id="news-ticker-text"></span>
+    </div>
+  </div>
+
+  <!-- Info modal -->
+  <div id="info-modal" class="hidden">
+    <div id="info-box">
+      <button class="info-close" id="info-close">&times;</button>
+      <h2>DIF3 — Морская торговая симуляция</h2>
+      <p>Многопользовательская игра-симулятор морской фрахтовой торговли.
+         Фрахтователи покупают и продают грузы, судовладельцы перевозят их между портами.</p>
+
+      <h3>Роли</h3>
+      <ul>
+        <li><b>Фрахтователь</b> — покупает грузы на бирже, оформляет оферты, нанимает суда для перевозки</li>
+        <li><b>Судовладелец</b> — владеет флотом, назначает маршруты, принимает оферты на перевозку</li>
+      </ul>
+
+      <h3>Управление картой</h3>
+      <ul>
+        <li><kbd>ЛКМ</kbd> + перетаскивание — перемещение по карте</li>
+        <li><kbd>Колесо мыши</kbd> — масштабирование</li>
+        <li>Наведение на порт — показать маршруты и расстояния</li>
+      </ul>
+
+      <h3>Панели</h3>
+      <ul>
+        <li><kbd>Клик</kbd> по кнопке в боковом меню — открыть панель в первом свободном слоте</li>
+        <li><kbd>Перетаскивание</kbd> кнопки на слот — разместить панель в конкретном слоте</li>
+        <li>Одновременно можно открыть <b>2 панели</b> (верх/низ)</li>
+        <li>Перетаскивание разделителя — изменить размер панелей</li>
+        <li><kbd>Двойной клик</kbd> по кнопке — открыть панель в отдельном окне</li>
+        <li>Повторный клик по кнопке — закрыть панель</li>
+      </ul>
+
+      <h3>Панели меню</h3>
+      <ul>
+        <li><b>Биржа</b> — цены на грузы, покупка и продажа (динамическое ценообразование)</li>
+        <li><b>Суда</b> — дислокация флота, управление маршрутами</li>
+        <li><b>Оферта</b> — создание и просмотр предложений на перевозку</li>
+        <li><b>Договоры</b> — история заключённых контрактов</li>
+        <li><b>Почта</b> — входящие сообщения и уведомления</li>
+        <li><b>Счёт</b> — баланс и история операций</li>
+        <li><b>Порт</b> — информация о порте, склад, погрузка/разгрузка</li>
+        <li><b>Отчёты/НСИ</b> — справочные данные, нормы хода и обработки</li>
+        <li><b>Журнал</b> — полный лог всех действий компании</li>
+      </ul>
+
+      <h3>Биржа и цены</h3>
+      <ul>
+        <li>Цены меняются динамически: случайный дрифт каждые 6 игровых часов + влияние новостей</li>
+        <li>Покупка груза повышает цену, продажа — снижает</li>
+        <li>Цены ограничены коридором ±40% от базовой цены порта</li>
+        <li>Действует механизм притяжения к базовой цене (mean reversion)</li>
+        <li>Изменения цен подсвечиваются зелёным (рост) или красным (падение)</li>
+      </ul>
+
+      <h3>Новости</h3>
+      <ul>
+        <li>Бегущая строка внизу экрана — новости по городам и товарам</li>
+        <li>Новости влияют на цены: покупка или продажа конкретного товара в конкретном порту</li>
+        <li>Частота новостей настраивается при создании игры (по умолчанию — каждые 3 игровых часа)</li>
+        <li>Клик по бегущей строке — пауза/продолжение прокрутки</li>
+      </ul>
+
+      <h3>Грузы</h3>
+      <ul>
+        <li>Фрукты, Удобрения, Металл, Лес</li>
+        <li>9 типов судов (от Волга-4001 до СТК-1001) с разной грузоподъёмностью и расходом топлива</li>
+      </ul>
+
+      <h3>Управление игрой (хост)</h3>
+      <ul>
+        <li><kbd>&#10074;&#10074;</kbd> — пауза &nbsp; <kbd>&#9654;</kbd> — продолжить</li>
+        <li>Поле <kbd>мин/с</kbd> — скорость игрового времени (минуты в секунду)</li>
+      </ul>
+
+      <h3>Админ-панель</h3>
+      <p>Доступна по адресу <kbd>/admin</kbd> — управление запасами, ценами, балансами, режим новостей, частота новостей, запуск игры, редактор карты.</p>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/shared/constants.js"></script>
+  <script src="/shared/mapData.js"></script>
+  <script src="/js/mapRenderer.js"></script>
+  <script src="/js/ui/fleetPanel.js"></script>
+  <script src="/js/ui/exchangePanel.js"></script>
+  <script src="/js/ui/offerPanel.js"></script>
+  <script src="/js/ui/contractPanel.js"></script>
+  <script src="/js/ui/mailPanel.js"></script>
+  <script src="/js/ui/accountPanel.js"></script>
+  <script src="/js/ui/portPanel.js"></script>
+  <script src="/js/ui/reportsPanel.js"></script>
+  <script src="/js/ui/logPanel.js"></script>
+  <script src="/js/newsTicker.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+/* map.css — Map canvas styling */
+#map-container {
+  background: #060d18;
+}
+
+#game-map {
+  cursor: grab;
+  display: block;
+}
+#game-map:active {
+  cursor: grabbing;
+}
+
+/* Prevent text selection while dragging map */
+#map-container.dragging {
+  user-select: none;
+}

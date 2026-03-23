@@ -1,0 +1,113 @@
+/* panels.css — Panel overlay styling */
+
+/* Common panel table */
+.panel-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.panel-table th {
+  background: #1e2130;
+  padding: 8px 10px;
+  text-align: left;
+  border-bottom: 1px solid #262a34;
+  color: #5aa8d0;
+  font-weight: bold;
+  position: sticky;
+  top: 0;
+}
+.panel-table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid #1e2130;
+}
+.panel-table tr:hover td {
+  background: #1e2130;
+}
+
+/* Panel form elements */
+.panel-form-group {
+  margin-bottom: 12px;
+}
+.panel-form-group label {
+  display: block;
+  font-size: 12px;
+  color: #6a7080;
+  margin-bottom: 4px;
+}
+.panel-form-group input,
+.panel-form-group select,
+.panel-form-group textarea {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #262a34;
+  border-radius: 4px;
+  background: #0e1018;
+  color: #c8cdd6;
+  font-size: 13px;
+}
+.panel-form-group textarea {
+  resize: vertical;
+  min-height: 60px;
+}
+
+.panel-btn {
+  padding: 8px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: bold;
+}
+.panel-btn-primary {
+  background: #1a5090;
+  color: #d0dce8;
+}
+.panel-btn-primary:hover { background: #2060a8; }
+.panel-btn-danger {
+  background: #8a2020;
+  color: #e0b0b0;
+}
+.panel-btn-danger:hover { background: #a03030; }
+.panel-btn-success {
+  background: #1e7a38;
+  color: #c0e0c8;
+}
+.panel-btn-success:hover { background: #289048; }
+
+/* Status indicators */
+.status-idle { color: #6a7080; }
+.status-en-route { color: #3090d0; }
+.status-loading { color: #c89040; }
+.status-unloading { color: #8050a0; }
+.status-announced { color: #4caf50; }
+
+/* Offer form specific */
+.offer-form-header {
+  font-style: italic;
+  color: #8890a0;
+  margin-bottom: 16px;
+  padding: 10px;
+  background: #1e2130;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.offer-section {
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #1e2130;
+}
+.offer-section-title {
+  font-size: 13px;
+  font-weight: bold;
+  color: #5aa8d0;
+  margin-bottom: 8px;
+}
+
+.offer-row {
+  display: flex;
+  gap: 12px;
+}
+.offer-row .panel-form-group {
+  flex: 1;
+}

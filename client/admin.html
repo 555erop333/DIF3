@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>DIF3 — Админ-панель</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0a0e18; color: #d0d0e0; font-family: 'Segoe UI', sans-serif; font-size: 13px; }
+
+    .admin-header {
+      background: #12182a; border-bottom: 1px solid #c0392b; padding: 12px 24px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .admin-title { font-size: 18px; color: #e74c3c; font-weight: bold; }
+    .admin-status { font-size: 12px; color: #888; }
+    .admin-status.ok { color: #4caf50; }
+
+    .admin-body { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding: 16px; max-width: 1400px; margin: 0 auto; }
+
+    .section {
+      background: #111a2e; border: 1px solid #1e3050; border-radius: 8px;
+      padding: 14px; min-height: 200px;
+    }
+    .section-title {
+      font-size: 14px; font-weight: bold; color: #e74c3c; margin-bottom: 12px;
+      padding-bottom: 8px; border-bottom: 1px solid #1e2a40;
+    }
+    .section.full { grid-column: 1 / -1; }
+
+    /* Tables */
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th { background: #0d1525; padding: 6px 8px; text-align: left; color: #e74c3c; font-size: 11px;
+         text-transform: uppercase; position: sticky; top: 0; }
+    td { padding: 5px 8px; border-bottom: 1px solid #151f35; }
+    tr:hover td { background: #131d30; }
+    th.center, td.center { text-align: center; }
+
+    /* Inputs */
+    input[type="number"], select {
+      background: #0a0e18; border: 1px solid #2a3a50; border-radius: 4px;
+      color: #e0e0e0; padding: 4px 6px; font-size: 12px; font-family: Consolas, monospace;
+      width: 90px;
+    }
+    input:focus { outline: none; border-color: #e74c3c; }
+
+    /* Buttons */
+    .btn {
+      padding: 5px 14px; border: none; border-radius: 4px; cursor: pointer;
+      font-size: 11px; font-weight: bold; transition: background .15s;
+    }
+    .btn-red { background: #c0392b; color: #fff; }
+    .btn-red:hover { background: #e74c3c; }
+    .btn-green { background: #1b5e20; color: #c8e6c9; }
+    .btn-green:hover { background: #2e7d32; }
+    .btn-blue { background: #1565c0; color: #bbdefb; }
+    .btn-blue:hover { background: #1976d2; }
+    .btn-gray { background: #37474f; color: #cfd8dc; }
+    .btn-gray:hover { background: #455a64; }
+    .btn:disabled { opacity: .4; cursor: not-allowed; }
+
+    /* Scrollable table wrapper */
+    .table-wrap { max-height: 400px; overflow-y: auto; }
+
+    /* Time controls */
+    .time-controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .time-display { font-family: Consolas, monospace; font-size: 16px; color: #e0e0e0; padding: 6px 14px;
+                    background: #0a0e18; border-radius: 6px; border: 1px solid #1e2a40; }
+    .speed-badge { background: #1a1a3a; padding: 4px 10px; border-radius: 4px; color: #ffa726; font-weight: bold; }
+
+    /* Player row */
+    .player-balance { display: flex; gap: 6px; align-items: center; }
+    .balance-val { font-family: Consolas, monospace; color: #4caf50; font-weight: bold; }
+
+    /* Toast */
+    .toast {
+      position: fixed; bottom: 20px; right: 20px; background: #1b5e20; color: #c8e6c9;
+      padding: 10px 20px; border-radius: 6px; font-size: 13px; display: none; z-index: 999;
+      box-shadow: 0 4px 16px rgba(0,0,0,.5);
+    }
+    .toast.err { background: #b71c1c; color: #ffcdd2; }
+    .toast.show { display: block; }
+    input[type="checkbox"] { width: auto; accent-color: #e74c3c; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div class="admin-header">
+    <span class="admin-title">DIF3 — Администрирование</span>
+    <span class="admin-status" id="status">Подключение...</span>
+  </div>
+
+  <div class="admin-body">
+    <!-- Lobby Control -->
+    <div class="section" id="lobby-section">
+      <div class="section-title">Лобби</div>
+      <div id="lobby-info" style="color:#889">Загрузка...</div>
+    </div>
+
+    <!-- Map Editor -->
+    <div class="section">
+      <div class="section-title">Редактор карты</div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <button class="btn btn-blue" id="btn-editor-on">Включить редактор</button>
+        <button class="btn btn-red" id="btn-editor-off" style="display:none">Выключить редактор</button>
+        <span id="editor-status" style="font-size:12px;color:#889"></span>
+      </div>
+      <div style="font-size:11px;color:#556;margin-top:10px;line-height:1.7">
+        Редактор включается на всех игровых клиентах.<br>
+        <b>Порты</b>: перетаскивание мышкой &nbsp;|&nbsp;
+        <b>Маршруты</b>: порт → точки → порт<br>
+        <kbd style="background:#0a0e18;border:1px solid #333;border-radius:3px;padding:1px 5px;font-size:11px">Esc</kbd> — отмена маршрута &nbsp;
+        <kbd style="background:#0a0e18;border:1px solid #333;border-radius:3px;padding:1px 5px;font-size:11px">Del</kbd> — удалить маршрут &nbsp;
+        <kbd style="background:#0a0e18;border:1px solid #333;border-radius:3px;padding:1px 5px;font-size:11px">ПКМ</kbd> — убрать точку
+      </div>
+    </div>
+
+    <!-- Time Control -->
+    <div class="section">
+      <div class="section-title">Управление временем</div>
+      <div class="time-controls">
+        <div class="time-display" id="game-time">--:--:--</div>
+        <span class="speed-badge" id="speed-badge">x1</span>
+        <button class="btn btn-green" id="btn-resume">Запуск</button>
+        <button class="btn btn-red" id="btn-pause">Пауза</button>
+        <label style="color:#889;margin-left:8px">Скорость (мин/с):</label>
+        <input type="number" id="speed-input" min="1" max="600" step="1" value="30" style="width:70px">
+        <button class="btn btn-blue" id="btn-speed">Задать</button>
+        <span style="color:#445;margin:0 4px">|</span>
+        <label style="color:#889">Множитель хода:</label>
+        <input type="number" id="travel-mult" min="0.1" max="20" step="0.1" value="1" style="width:70px">
+        <button class="btn btn-gray" id="btn-travel-mult">Задать</button>
+        <span class="speed-badge" id="travel-badge" style="background:#1a3a1a;color:#66bb6a">x1</span>
+      </div>
+    </div>
+
+    <!-- Players -->
+    <div class="section">
+      <div class="section-title">Игроки
+        <span style="float:right;display:flex;gap:8px;align-items:center">
+          <label style="font-size:12px;color:#889">Единый баланс:</label>
+          <input type="number" id="uniform-balance" min="0" value="1000000" step="100000" style="width:120px">
+          <button class="btn btn-blue" id="btn-uniform-balance">Применить всем</button>
+        </span>
+      </div>
+      <div class="table-wrap" id="players-table">Нет данных</div>
+    </div>
+
+    <!-- Prices & Supply -->
+    <div class="section full">
+      <div class="section-title">Биржа — Цены и запасы
+        <span style="float:right;display:flex;gap:10px;align-items:center">
+          <label style="display:flex;align-items:center;gap:4px;cursor:pointer;color:#ffa726;font-size:12px">
+            <input type="checkbox" id="chk-infinite"> Бесконечные запасы
+          </label>
+          <span style="color:#445">|</span>
+          <label style="font-size:12px;color:#889">Установить все запасы:</label>
+          <input type="number" id="bulk-supply" min="0" value="5000" style="width:80px">
+          <button class="btn btn-gray" id="btn-bulk-supply">Применить</button>
+          <span style="color:#445">|</span>
+          <label style="font-size:12px;color:#889">Ресток каждые (дней):</label>
+          <input type="number" id="restock-days" min="1" max="30" value="3" step="1" style="width:60px">
+          <button class="btn btn-gray" id="btn-restock-days">Задать</button>
+          <span style="color:#445">|</span>
+          <select id="port-filter" style="width:200px"><option value="">Все порты</option></select>
+        </span>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:12px;padding:8px 10px;background:#0d1525;border-radius:6px">
+        <span style="font-size:12px;color:#e74c3c;font-weight:bold">Режим цен:</span>
+        <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:12px;color:#e0e0e0">
+          <input type="radio" name="news-mode" value="news_only" style="accent-color:#e74c3c"> Только новости
+        </label>
+        <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:12px;color:#e0e0e0">
+          <input type="radio" name="news-mode" value="news_and_drift" style="accent-color:#e74c3c" checked> Новости + drift
+        </label>
+        <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:12px;color:#e0e0e0">
+          <input type="radio" name="news-mode" value="drift_only" style="accent-color:#e74c3c"> Только drift
+        </label>
+        <span id="news-stats" style="margin-left:auto;font-size:11px;color:#556"></span>
+        <span style="color:#445">|</span>
+        <label style="font-size:12px;color:#889">Частота новостей (час):</label>
+        <input type="number" id="news-freq" min="0.5" max="48" value="2" step="0.5" style="width:50px">
+        <button class="btn btn-gray" id="btn-news-freq">Задать</button>
+      </div>
+      <div class="table-wrap" id="exchange-table">Нет данных</div>
+    </div>
+  </div>
+
+  <div style="text-align:center;padding:18px 0 10px;color:#2a2a3a;font-size:11px;letter-spacing:1px">weather report</div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/shared/constants.js"></script>
+  <script src="/shared/mapData.js"></script>
+  <script>
+    var socket = io();
+    var C = window.SharedConstants;
+    var MD = window.MapData;
+    var state = { players: {}, prices: {}, paused: false, speed: 1, gameTime: null, infiniteSupply: false, travelMultiplier: 1, newsMode: 'news_and_drift', restockDays: 3, newsFrequencyHours: 2 };
+
+    function fmt(n) { return Number(n).toLocaleString('ru-RU'); }
+
+    // === Connection ===
+    socket.on('connect', function() {
+      document.getElementById('status').textContent = 'Подключено';
+      document.getElementById('status').className = 'admin-status ok';
+      refreshLobby();
+      refresh();
+    });
+    socket.on('disconnect', function() {
+      document.getElementById('status').textContent = 'Отключено';
+      document.getElementById('status').className = 'admin-status';
+    });
+
+    function refresh() {
+      socket.emit('admin:getAll', null, function(data) {
+        if (data.error) return toast(data.error, true);
+        state.players = data.players || {};
+        state.prices = data.prices || {};
+        state.paused = data.paused;
+        state.speed = data.speed || 1;
+        state.gameTime = data.gameTime;
+        state.infiniteSupply = data.infiniteSupply || false;
+        state.travelMultiplier = data.travelMultiplier || 1;
+        state.newsMode = data.newsMode || 'news_and_drift';
+        state.newsStats = data.newsStats || { cities: 0, totalNews: 0 };
+        state.newsFrequencyHours = data.newsFrequencyHours || 2;
+        state.restockDays = data.restockDays || 3;
+        renderAll();
+      });
+    }
+
+    // Live updates
+    socket.on('game:tick', function(data) {
+      if (data.time) {
+        state.gameTime = data.time;
+        renderTime();
+      }
+    });
+    socket.on('exchange:prices', function(prices) {
+      state.prices = prices;
+      updateExchangeValues();
+    });
+    socket.on('exchange:infiniteSupply', function(val) {
+      state.infiniteSupply = !!val;
+      var chk = document.getElementById('chk-infinite');
+      if (chk) chk.checked = state.infiniteSupply;
+      renderExchange();
+    });
+    socket.on('game:playersUpdate', function(data) {
+      if (data.players) { state.players = data.players; renderPlayers(); }
+    });
+    socket.on('game:paused', function() { state.paused = true; renderTime(); });
+    socket.on('game:resumed', function() { state.paused = false; renderTime(); });
+    socket.on('game:speedChanged', function(s) { state.speed = s; renderTime(); });
+
+    // === Lobby ===
+    function refreshLobby() {
+      socket.emit('lobby:getState', null, function(data) {
+        renderLobby(data);
+      });
+    }
+
+    function renderLobby(lobbyData) {
+      var el = document.getElementById('lobby-info');
+      var section = document.getElementById('lobby-section');
+      if (!lobbyData) { el.innerHTML = '<p style="color:#556">Нет данных</p>'; return; }
+
+      if (lobbyData.started) {
+        section.style.display = 'none';
+        return;
+      }
+
+      var players = Object.values(lobbyData.players || {});
+      var h = '<div style="margin-bottom:10px">';
+      if (players.length === 0) {
+        h += '<p style="color:#889">Нет игроков в лобби</p>';
+      } else {
+        h += '<table><thead><tr><th>Компания</th><th>Роль</th><th>Готов</th></tr></thead><tbody>';
+        players.forEach(function(p) {
+          var role = p.role === 'charterer' ? 'Фрахтователь' : 'Судовладелец';
+          var ready = p.ready ? '<span style="color:#4caf50">Да</span>' : '<span style="color:#f44">Нет</span>';
+          h += '<tr><td>' + p.companyName + '</td><td>' + role + '</td><td class="center">' + ready + '</td></tr>';
+        });
+        h += '</tbody></table>';
+      }
+      h += '</div>';
+      h += '<button class="btn btn-green" id="btn-start-game"' + (players.length < 1 ? ' disabled' : '') + '>Запустить игру</button>';
+      el.innerHTML = h;
+
+      document.getElementById('btn-start-game').onclick = function() {
+        socket.emit('admin:startGame', null, function(r) {
+          if (r.error) toast(r.error, true);
+          else { toast('Игра запущена!'); refreshLobby(); refresh(); }
+        });
+      };
+    }
+
+    socket.on('lobby:state', function(data) { renderLobby(data); });
+    socket.on('lobby:gameStarted', function() {
+      document.getElementById('lobby-section').style.display = 'none';
+      setTimeout(refresh, 500);
+    });
+
+    // === Render All ===
+    function renderAll() {
+      renderTime();
+      renderPlayers();
+      renderExchange();
+      renderPortFilter();
+      renderSupplyControls();
+      renderNewsControls();
+    }
+
+    function renderSupplyControls() {
+      var chk = document.getElementById('chk-infinite');
+      chk.checked = state.infiniteSupply;
+      chk.onchange = function() {
+        socket.emit('admin:setInfiniteSupply', { enabled: chk.checked }, function(r) {
+          if (r.error) { toast(r.error, true); return; }
+          state.infiniteSupply = r.infiniteSupply;
+          toast(r.infiniteSupply ? 'Бесконечные запасы включены' : 'Бесконечные запасы выключены');
+        });
+      };
+      document.getElementById('btn-bulk-supply').onclick = function() {
+        var val = parseInt(document.getElementById('bulk-supply').value) || 0;
+        socket.emit('admin:setAllSupply', { supply: val }, function(r) {
+          if (r.error) toast(r.error, true);
+          else { toast('Все запасы установлены: ' + fmt(val) + ' т'); }
+        });
+      };
+      document.getElementById('restock-days').value = state.restockDays;
+      document.getElementById('btn-restock-days').onclick = function() {
+        var days = parseFloat(document.getElementById('restock-days').value) || 3;
+        socket.emit('admin:setRestockDays', { days: days }, function(r) {
+          if (r.error) toast(r.error, true);
+          else { state.restockDays = r.restockDays; toast('Ресток каждые ' + r.restockDays + ' дн.'); }
+        });
+      };
+    }
+
+    // === Time ===
+    function renderTime() {
+      var el = document.getElementById('game-time');
+      if (state.gameTime) {
+        var d = new Date(state.gameTime);
+        el.textContent = d.toLocaleDateString('ru-RU') + ' ' +
+          d.toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'});
+        if (state.paused) el.textContent += ' [ПАУЗА]';
+      }
+      document.getElementById('speed-badge').textContent = Math.round(state.speed * 60) + ' мин/с';
+      document.getElementById('speed-input').value = Math.round(state.speed * 60);
+      document.getElementById('travel-badge').textContent = 'x' + state.travelMultiplier;
+      document.getElementById('travel-mult').value = state.travelMultiplier;
+    }
+
+    document.getElementById('btn-pause').onclick = function() {
+      socket.emit('admin:setTime', { action: 'pause' }, function(r) {
+        if (r.success) { state.paused = true; renderTime(); toast('Пауза'); }
+      });
+    };
+    document.getElementById('btn-resume').onclick = function() {
+      socket.emit('admin:setTime', { action: 'resume' }, function(r) {
+        if (r.success) { state.paused = false; renderTime(); toast('Запущено'); }
+      });
+    };
+    document.getElementById('btn-speed').onclick = function() {
+      var minutes = parseFloat(document.getElementById('speed-input').value) || 10;
+      var s = minutes / 60;
+      socket.emit('admin:setTime', { action: 'setSpeed', speed: s }, function(r) {
+        if (r.success) { state.speed = r.speed || s; renderTime(); toast('Скорость: ' + Math.round(state.speed * 60) + ' мин/с'); }
+      });
+    };
+    document.getElementById('btn-travel-mult').onclick = function() {
+      var m = parseFloat(document.getElementById('travel-mult').value) || 1;
+      socket.emit('admin:setTravelMultiplier', { multiplier: m }, function(r) {
+        if (r.error) toast(r.error, true);
+        else { state.travelMultiplier = r.multiplier; renderTime(); toast('Множитель хода: x' + r.multiplier); }
+      });
+    };
+
+    // === Players ===
+    function renderPlayers() {
+      var players = Object.entries(state.players).filter(function(e) { return !e[1].isNPC; });
+      if (players.length === 0) {
+        document.getElementById('players-table').innerHTML = '<p style="color:#556">Нет игроков</p>';
+        return;
+      }
+      var h = '<table><thead><tr><th>Компания</th><th>Роль</th><th>Баланс</th><th>Действие</th></tr></thead><tbody>';
+      players.forEach(function(entry) {
+        var pid = entry[0], p = entry[1];
+        var role = p.role === 'charterer' ? 'Фрахтователь' : 'Судовладелец';
+        var dc = p.disconnected ? ' <span style="color:#f44">[офлайн]</span>' : '';
+        h += '<tr>';
+        h += '<td>' + p.companyName + dc + '</td>';
+        h += '<td>' + role + '</td>';
+        h += '<td class="player-balance">';
+        h += '<input type="number" class="bal-input" data-pid="' + pid + '" value="' + Math.round(p.balance) + '" step="100000" style="width:120px">';
+        h += '</td>';
+        h += '<td><button class="btn btn-blue bal-save" data-pid="' + pid + '">Сохранить</button></td>';
+        h += '</tr>';
+      });
+      h += '</tbody></table>';
+      document.getElementById('players-table').innerHTML = h;
+
+      // Bind save buttons
+      document.querySelectorAll('.bal-save').forEach(function(btn) {
+        btn.onclick = function() {
+          var pid = btn.dataset.pid;
+          var input = document.querySelector('.bal-input[data-pid="' + pid + '"]');
+          var balance = parseInt(input.value) || 0;
+          socket.emit('admin:setBalance', { playerId: pid, balance: balance }, function(r) {
+            if (r.error) toast(r.error, true);
+            else { state.players[pid].balance = r.newBalance; toast('Баланс обновлён: $' + fmt(r.newBalance)); renderPlayers(); }
+          });
+        };
+      });
+    }
+
+    // === Port filter ===
+    function renderPortFilter() {
+      var sel = document.getElementById('port-filter');
+      var cur = sel.value;
+      sel.innerHTML = '<option value="">Все порты</option>';
+      MD.PORTS.filter(function(p) { return p.isMain; }).forEach(function(p) {
+        sel.innerHTML += '<option value="' + p.id + '"' + (p.id === cur ? ' selected' : '') + '>' + p.name + '</option>';
+      });
+      sel.onchange = function() { renderExchange(); };
+    }
+
+    // === Exchange ===
+    function renderExchange() {
+      var filter = document.getElementById('port-filter').value;
+      var ports = MD.PORTS.filter(function(p) { return p.isMain && state.prices[p.id]; });
+      if (filter) ports = ports.filter(function(p) { return p.id === filter; });
+
+      if (ports.length === 0) {
+        document.getElementById('exchange-table').innerHTML = '<p style="color:#556">Нет данных</p>';
+        return;
+      }
+
+      var inf = state.infiniteSupply;
+      var h = '<table><thead><tr>';
+      h += '<th>Порт</th><th>Груз</th>';
+      h += '<th class="center">Покупка ($/т)</th>';
+      h += '<th class="center">Продажа ($/т)</th>';
+      h += '<th class="center">Запас (т)</th>';
+      h += '<th class="center">Действие</th>';
+      h += '</tr></thead><tbody>';
+
+      ports.forEach(function(port) {
+        var prices = state.prices[port.id];
+        C.CARGO_LIST.forEach(function(cargo, ci) {
+          var e = prices[cargo.id];
+          if (!e) return;
+          var rowId = port.id + '_' + cargo.id;
+          h += '<tr>';
+          if (ci === 0) h += '<td rowspan="' + C.CARGO_LIST.length + '" style="font-weight:600;color:#6ba3d6;vertical-align:top;border-right:1px solid #1e2a40">' + port.name + '</td>';
+          h += '<td>' + cargo.name + '</td>';
+          h += '<td class="center"><input type="number" class="ex-inp" data-id="' + rowId + '" data-field="buyPrice" value="' + e.buyPrice + '" min="1" style="width:80px;color:#66bb6a"></td>';
+          h += '<td class="center"><input type="number" class="ex-inp" data-id="' + rowId + '" data-field="sellPrice" value="' + e.sellPrice + '" min="1" style="width:80px;color:#ffa726"></td>';
+          if (inf) {
+            h += '<td class="center" style="color:#ffa726;font-size:18px;font-weight:bold">∞</td>';
+          } else {
+            h += '<td class="center"><input type="number" class="ex-inp" data-id="' + rowId + '" data-field="supply" value="' + e.supply + '" min="0" style="width:80px"></td>';
+          }
+          h += '<td class="center"><button class="btn btn-blue ex-save" data-port="' + port.id + '" data-cargo="' + cargo.id + '">OK</button></td>';
+          h += '</tr>';
+        });
+      });
+      h += '</tbody></table>';
+      document.getElementById('exchange-table').innerHTML = h;
+
+      // Bind save
+      document.querySelectorAll('.ex-save').forEach(function(btn) {
+        btn.onclick = function() {
+          var portId = btn.dataset.port;
+          var cargoId = btn.dataset.cargo;
+          var rowId = portId + '_' + cargoId;
+          var buyPrice = parseInt(document.querySelector('.ex-inp[data-id="' + rowId + '"][data-field="buyPrice"]').value);
+          var sellPrice = parseInt(document.querySelector('.ex-inp[data-id="' + rowId + '"][data-field="sellPrice"]').value);
+          var supplyEl = document.querySelector('.ex-inp[data-id="' + rowId + '"][data-field="supply"]');
+          var supply = supplyEl ? parseInt(supplyEl.value) : undefined;
+          socket.emit('admin:setPrice', { portId: portId, cargoId: cargoId, buyPrice: buyPrice, sellPrice: sellPrice, supply: supply }, function(r) {
+            if (r.error) toast(r.error, true);
+            else toast(portId + ' / ' + cargoId + ' — обновлено');
+          });
+        };
+      });
+    }
+
+    // Обновление значений в таблице биржи на месте (без перестройки DOM)
+    function updateExchangeValues() {
+      var inputs = document.querySelectorAll('.ex-inp');
+      if (inputs.length === 0) { renderExchange(); return; }
+      inputs.forEach(function(inp) {
+        // Не трогать поле, которое сейчас редактирует пользователь
+        if (document.activeElement === inp) return;
+        var field = inp.dataset.field;
+        // Найти portId и cargoId через ближайшую кнопку OK в той же строке
+        var row = inp.closest('tr');
+        var btn = row && row.querySelector('.ex-save');
+        if (!btn) return;
+        var portId = btn.dataset.port;
+        var cargoId = btn.dataset.cargo;
+        var entry = state.prices[portId] && state.prices[portId][cargoId];
+        if (entry && entry[field] != null) {
+          inp.value = entry[field];
+        }
+      });
+    }
+
+    // === News Mode ===
+    function renderNewsControls() {
+      // Set radio to current mode
+      var radios = document.querySelectorAll('input[name="news-mode"]');
+      radios.forEach(function(r) {
+        r.checked = (r.value === state.newsMode);
+        r.onchange = function() {
+          socket.emit('admin:setNewsMode', { mode: r.value }, function(res) {
+            if (res.error) toast(res.error, true);
+            else {
+              state.newsMode = res.newsMode;
+              var labels = { news_only: 'Только новости', news_and_drift: 'Новости + drift', drift_only: 'Только drift' };
+              toast('Режим цен: ' + labels[res.newsMode]);
+            }
+          });
+        };
+      });
+      // News stats
+      var statsEl = document.getElementById('news-stats');
+      if (state.newsStats) {
+        statsEl.textContent = 'Городов: ' + state.newsStats.cities + ' | Новостей: ' + state.newsStats.totalNews;
+      }
+      // News frequency
+      var freqInput = document.getElementById('news-freq');
+      freqInput.value = state.newsFrequencyHours;
+      document.getElementById('btn-news-freq').onclick = function() {
+        var hours = parseFloat(freqInput.value) || 2;
+        socket.emit('admin:setNewsFrequency', { hours: hours }, function(res) {
+          if (res.error) toast(res.error, true);
+          else {
+            state.newsFrequencyHours = res.newsFrequencyHours;
+            toast('Частота новостей: каждые ' + res.newsFrequencyHours + ' ч');
+          }
+        });
+      };
+    }
+
+    // === Toast ===
+    function toast(msg, isErr) {
+      var el = document.getElementById('toast');
+      el.textContent = msg;
+      el.className = 'toast show' + (isErr ? ' err' : '');
+      clearTimeout(el._timer);
+      el._timer = setTimeout(function() { el.className = 'toast'; }, 2500);
+    }
+
+    // Auto-refresh players every 10s (exchange updates live via socket)
+    setInterval(function() {
+      socket.emit('admin:getAll', null, function(data) {
+        if (data.error) return;
+        state.players = data.players || {};
+        state.travelMultiplier = data.travelMultiplier || 1;
+        state.newsStats = data.newsStats || { cities: 0, totalNews: 0 };
+        state.restockDays = data.restockDays || 3;
+        renderPlayers();
+        renderTime();
+        var statsEl = document.getElementById('news-stats');
+        if (state.newsStats) {
+          statsEl.textContent = 'Городов: ' + state.newsStats.cities + ' | Новостей: ' + state.newsStats.totalNews;
+        }
+      });
+      refreshLobby();
+    }, 10000);
+
+    // Uniform balance button
+    document.getElementById('btn-uniform-balance').onclick = function() {
+      var val = parseInt(document.getElementById('uniform-balance').value) || 0;
+      socket.emit('admin:setAllBalance', { balance: val }, function(r) {
+        if (r.error) toast(r.error, true);
+        else {
+          Object.keys(state.players).forEach(function(pid) { if (!state.players[pid].isNPC) state.players[pid].balance = r.balance; });
+          toast('Баланс всех игроков: $' + fmt(r.balance));
+          renderPlayers();
+        }
+      });
+    };
+
+    // Editor toggle
+    var editorOn = false;
+    var btnOn = document.getElementById('btn-editor-on');
+    var btnOff = document.getElementById('btn-editor-off');
+    var edStatus = document.getElementById('editor-status');
+
+    function setEditorUI(on) {
+      editorOn = on;
+      btnOn.style.display = on ? 'none' : '';
+      btnOff.style.display = on ? '' : 'none';
+      edStatus.textContent = on ? 'Редактор активен на игровых клиентах' : '';
+    }
+
+    btnOn.onclick = function() {
+      socket.emit('admin:toggleEditor', { enabled: true }, function(r) {
+        if (r.error) toast(r.error, true);
+        else { setEditorUI(true); toast('Редактор включён'); }
+      });
+    };
+    btnOff.onclick = function() {
+      socket.emit('admin:toggleEditor', { enabled: false }, function(r) {
+        if (r.error) toast(r.error, true);
+        else { setEditorUI(false); toast('Редактор выключён'); }
+      });
+    };
+  </script>
+</body>
+</html>
