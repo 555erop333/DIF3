@@ -22,7 +22,7 @@
 ## Стек
 
 - **Сервер:** Node.js + Express + Socket.IO
-- **Клиент:** HTML / CSS / vanilla JS + Canvas 2D
+- **Клиент:** HTML / CSS / Vanilla JS + Canvas 2D
 - **Сборка:** pkg (standalone .exe для Windows)
 
 ## Быстрый старт
